@@ -1,0 +1,68 @@
+# EARTHROPY — the whole suite in one file.
+# Start:  docker compose up -d      Open: http://SERVER-IP:9090
+# Settings live in .env (created by install.sh from .env.example).
+
+services:
+  # The doorman: one port, one path per app (see caddy/Caddyfile)
+  caddy:
+    image: caddy:2
+    container_name: earthropy-caddy
+    restart: unless-stopped
+    ports:
+      - "${EARTHROPY_PORT:-9090}:${EARTHROPY_PORT:-9090}"
+    environment:
+      EARTHROPY_PORT: ${EARTHROPY_PORT:-9090}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./config/apps.json:/etc/earthropy/apps.json:ro
+      - ./system:/srv/system:ro
+      - caddy-data:/data
+    depends_on:
+      - dashboard
+      - drive
+
+  # Dashboard (EARTHROPY build of Homarr)
+  dashboard:
+    image: ghcr.io/${EARTHROPY_GITHUB_USER}/earthropy-dashboard:latest
+    container_name: earthropy-dashboard
+    restart: unless-stopped
+    environment:
+      SECRET_ENCRYPTION_KEY: ${SECRET_ENCRYPTION_KEY}
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - ./data/dashboard:/appdata
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # A Drive (EARTHROPY build of FileBrowser Quantum)
+  drive:
+    image: ghcr.io/${EARTHROPY_GITHUB_USER}/earthropy-drive:latest
+    container_name: earthropy-drive
+    restart: unless-stopped
+    # runs as root so it can manage every file in your folder, like CasaOS does
+    user: "0:0"
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      FILEBROWSER_CONFIG: /home/filebrowser/config/config.yaml
+      FILEBROWSER_DATABASE_PATH: /home/filebrowser/data/database.sqlite
+    volumes:
+      - ./config/drive:/home/filebrowser/config
+      - ./data/drive:/home/filebrowser/data
+      - ${EARTHROPY_FILES:-/DATA}:/srv
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Keeps the apps up to date: when GitHub publishes a new image, it restarts that app
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: earthropy-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_CLEANUP: "true"
+
+volumes:
+  caddy-data:

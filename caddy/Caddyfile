@@ -1,0 +1,44 @@
+# EARTHROPY — the "doorman"
+# Everything lives behind one port. Each path goes to one app:
+#
+#   /                      → Dashboard
+#   /drive/                → A Drive
+#   /system/               → System (this repo's own app)
+#   /earthropy/apps.json   → the central list of apps (read by every app)
+#
+# The upstream addresses can be changed with environment variables,
+# so the same file works in Docker and in local tests.
+
+{
+	admin off
+}
+
+:{$EARTHROPY_PORT:9090} {
+	encode zstd gzip
+
+	# Central list of apps: the dashboard bar and the A Drive app switcher read it
+	handle /earthropy/apps.json {
+		root * {$EARTHROPY_CONFIG:/etc/earthropy}
+		rewrite * /apps.json
+		header Cache-Control "no-cache"
+		file_server
+	}
+
+	# System app (static files from this repo)
+	redir /system /system/
+	handle_path /system/* {
+		root * {$EARTHROPY_SYSTEM:/srv/system}
+		file_server
+	}
+
+	# A Drive (FileBrowser Quantum running with baseURL /drive/)
+	redir /drive /drive/
+	handle /drive/* {
+		reverse_proxy {$DRIVE_UPSTREAM:drive:80}
+	}
+
+	# Dashboard gets everything else
+	handle {
+		reverse_proxy {$DASHBOARD_UPSTREAM:dashboard:7575}
+	}
+}

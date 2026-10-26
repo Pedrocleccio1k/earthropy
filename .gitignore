@@ -1,0 +1,4 @@
+# Your own settings and data — never sent to GitHub
+.env
+data/
+config/drive/config.yaml

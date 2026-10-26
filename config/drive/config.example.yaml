@@ -1,0 +1,24 @@
+# A Drive (FileBrowser Quantum) — default configuration
+# install.sh copies this to config.yaml and asks for the password.
+http:
+  port: 80
+  baseURL: "/drive/"
+server:
+  sources:
+    - path: "/srv"
+      name: "My files"
+      config:
+        defaultEnabled: true
+auth:
+  methods:
+    password:
+      enabled: true
+      minLength: 5
+      signup: false
+  adminUsername: "admin"
+  adminPassword: "CHANGE_THIS_PASSWORD"
+frontend:
+  name: "A Drive"
+userDefaults:
+  ui:
+    darkMode: false

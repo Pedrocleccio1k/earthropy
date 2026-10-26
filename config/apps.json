@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "apps": [
+    { "id": "dashboard", "name": "Dashboard", "description": "Home of the suite", "letter": "E", "from": "#0b1b3f", "to": "#4f7cff", "url": "/" },
+    { "id": "drive", "name": "A Drive", "description": "Files & sync", "letter": "A", "from": "#1b6bff", "to": "#19d3c5", "url": "/drive/" },
+    { "id": "musik", "name": "Musik", "description": "Music", "letter": "M", "from": "#ff3d81", "to": "#ff8a4c", "url": null },
+    { "id": "whatch", "name": "Whatch", "description": "Movies & shows", "letter": "W", "from": "#4f7cff", "to": "#b14cff", "url": null },
+    { "id": "knowlg", "name": "Knowlg", "description": "Reading", "letter": "K", "from": "#f2994a", "to": "#f2c94c", "url": null },
+    { "id": "mediaz", "name": "MediaZ", "description": "Photos & media", "letter": "M", "from": "#19d3c5", "to": "#2ecc71", "url": null },
+    { "id": "notz", "name": "Notz", "description": "Notes", "letter": "N", "from": "#ffd166", "to": "#ff8a4c", "url": null },
+    { "id": "contaktz", "name": "Contaktz", "description": "Contacts", "letter": "C", "from": "#2ecc71", "to": "#0f7a4a", "url": null },
+    { "id": "sticky", "name": "Sticky", "description": "Stickers", "letter": "S", "from": "#ff8a4c", "to": "#ff3d81", "url": null },
+    { "id": "kalendar", "name": "Kalendar", "description": "Calendar", "letter": "K", "from": "#b14cff", "to": "#4f7cff", "url": null },
+    { "id": "struingz", "name": "struingz", "description": "Guitar tabs", "letter": "S", "from": "#8a8a8a", "to": "#0b1b3f", "url": null },
+    { "id": "pazzy", "name": "Pazzy", "description": "Passwords & 2FA", "letter": "P", "from": "#6b4cff", "to": "#19d3c5", "url": null },
+    { "id": "system", "name": "System", "description": "Apps, status & map", "letter": "S", "from": "#0b1b3f", "to": "#19d3c5", "url": "/system/" }
+  ]
+}
