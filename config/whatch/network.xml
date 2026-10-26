@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Whatch (Jellyfin): lives at http://SERVER:9090/whatch/ behind the EARTHROPY doorman.
+     install.sh copies this into data/whatch/config/config/ before the first start. -->
+<NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <BaseUrl>/whatch</BaseUrl>
+</NetworkConfiguration>

@@ -155,11 +155,13 @@
       add("rect", { x: 570, y: y - 16, width: 32, height: 32, rx: 10, fill: `url(#g-${app.id})` });
       add("text", { x: 586, y: y + 5, "font-size": 13, "text-anchor": "middle", fill: "#fff", style: "fill:#fff;font-family:Orbitron,sans-serif" }, app.letter);
       add("text", { x: 614, y: y + 5, "font-size": 14, "font-weight": 600 }, app.name);
-      if (app.id === "drive") {
+      // apps that use the files folder on the server
+      const files = { drive: "server folder", whatch: "read-only" }[app.id];
+      if (files) {
         add("path", { class: "wire wire--files", d: `M760 ${y} L800 ${y}` });
         add("rect", { class: "box", x: 800, y: y - 24, width: 120, height: 48, rx: 14 });
         add("text", { x: 814, y: y - 2, "font-size": 12, "font-weight": 600 }, "Your files");
-        add("text", { x: 814, y: y + 14, "font-size": 11, class: "mono" }, "server folder");
+        add("text", { x: 814, y: y + 14, "font-size": 11, class: "mono" }, files);
       }
     });
     $("#map-view").replaceChildren(svg);

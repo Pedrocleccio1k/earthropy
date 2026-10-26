@@ -1,0 +1,28 @@
+# A Drive (FileBrowser Quantum) — EARTHROPY settings
+# Sign-in happens on the dashboard: the doorman (caddy/Caddyfile) tells A Drive who you are.
+# Dashboard admins are A Drive admins. There is no separate A Drive password.
+http:
+  port: 80
+  baseURL: "/drive/"
+  trustProxyHeaders: true
+server:
+  sources:
+    - path: "/srv"
+      name: "My files"
+      config:
+        defaultEnabled: true
+auth:
+  methods:
+    password:
+      enabled: false
+    proxy:
+      enabled: true
+      header: "X-Earthropy-User"
+      groupsClaim: "X-Earthropy-Groups"
+      adminGroup: "admin"
+      logoutRedirectUrl: "/api/earthropy/logout"
+frontend:
+  name: "A Drive"
+userDefaults:
+  ui:
+    darkMode: false

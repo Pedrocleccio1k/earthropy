@@ -1,10 +1,14 @@
 # EARTHROPY — the "doorman"
 # Everything lives behind one port. Each path goes to one app:
 #
-#   /                      → Dashboard
+#   /                      → Dashboard (also where you sign in)
 #   /drive/                → A Drive
+#   /whatch/               → Whatch (Jellyfin)
 #   /system/               → System (this repo's own app)
 #   /earthropy/apps.json   → the central list of apps (read by every app)
+#
+# Single sign-on: you sign in once, on the dashboard. Before letting a request into
+# A Drive or System, the doorman asks the dashboard who you are and passes your name on.
 #
 # The upstream addresses can be changed with environment variables,
 # so the same file works in Docker and in local tests.
@@ -13,10 +17,21 @@
 	admin off
 }
 
+# Ask the dashboard who is signed in. Signed out → back to the dashboard login.
+(signed_in) {
+	# never trust identity headers sent by the browser itself
+	request_header -X-Earthropy-User
+	request_header -X-Earthropy-Groups
+	forward_auth {$DASHBOARD_UPSTREAM:dashboard:7575} {
+		uri /api/earthropy/auth
+		copy_headers X-Earthropy-User X-Earthropy-Groups
+	}
+}
+
 :{$EARTHROPY_PORT:9090} {
 	encode zstd gzip
 
-	# Central list of apps: the dashboard bar and the A Drive app switcher read it
+	# Central list of apps: the dashboard bar and the app switchers read it
 	handle /earthropy/apps.json {
 		root * {$EARTHROPY_CONFIG:/etc/earthropy}
 		rewrite * /apps.json
@@ -24,17 +39,42 @@
 		file_server
 	}
 
-	# System app (static files from this repo)
+	# System app (static files from this repo) — needs the dashboard sign-in
 	redir /system /system/
-	handle_path /system/* {
-		root * {$EARTHROPY_SYSTEM:/srv/system}
-		file_server
+	handle /system/* {
+		route {
+			import signed_in
+			uri strip_prefix /system
+			root * {$EARTHROPY_SYSTEM:/srv/system}
+			file_server
+		}
 	}
 
-	# A Drive (FileBrowser Quantum running with baseURL /drive/)
-	redir /drive /drive/
-	handle /drive/* {
+	# A Drive public share links work for anyone, without signing in
+	handle /drive/public/* {
+		request_header -X-Earthropy-User
+		request_header -X-Earthropy-Groups
 		reverse_proxy {$DRIVE_UPSTREAM:drive:80}
+	}
+
+	# A Drive (FileBrowser Quantum with baseURL /drive/) — signs you in with your dashboard user
+	redir /drive /drive/
+	# A Drive's own login page is not used: you are already signed in through the dashboard
+	redir /drive/login /drive{http.request.uri.query.redirect}
+	handle /drive/* {
+		route {
+			import signed_in
+			reverse_proxy {$DRIVE_UPSTREAM:drive:80}
+		}
+	}
+
+	# Whatch (Jellyfin with base URL /whatch). For now it keeps its own login,
+	# because the Jellyfin apps for phone and TV sign in on their own.
+	redir /whatch /whatch/
+	handle /whatch/* {
+		request_header -X-Earthropy-User
+		request_header -X-Earthropy-Groups
+		reverse_proxy {$WHATCH_UPSTREAM:whatch:8096}
 	}
 
 	# Dashboard gets everything else

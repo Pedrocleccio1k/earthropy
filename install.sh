@@ -40,12 +40,24 @@ set_env() { # set_env KEY VALUE
   fi
 }
 
+# folders for each app's data, plus first-start settings
+prepare_folders() {
+  mkdir -p data/dashboard data/drive data/whatch/config/config data/whatch/cache
+  # Whatch (Jellyfin) must know it lives at /whatch — only set before its first start
+  if [ ! -f data/whatch/config/config/network.xml ]; then
+    cp config/whatch/network.xml data/whatch/config/config/network.xml
+  fi
+}
+
 if [ "${1:-}" = "update" ]; then
   need_docker
   blue "Getting the newest EARTHROPY settings…"
   git pull --ff-only
+  prepare_folders
   docker compose pull
   docker compose up -d
+  # the doorman reads caddy/Caddyfile and config/apps.json when it starts
+  docker compose up -d --force-recreate caddy
   green "Updated. Open: http://$(server_ip):$(grep '^EARTHROPY_PORT=' .env | cut -d= -f2)"
   exit 0
 fi
@@ -80,7 +92,7 @@ if [ "$old" != "none" ]; then
     exit 1
   fi
   ( cd "$old" && docker compose down ) || true
-  mkdir -p data/dashboard data/drive
+  prepare_folders
   if [ -d "$old/appdata" ]; then
     cp -a "$old/appdata/." data/dashboard/
     green "  Dashboard data copied"
@@ -100,24 +112,7 @@ if ! grep -q '^SECRET_ENCRYPTION_KEY=.\+' .env; then
   set_env SECRET_ENCRYPTION_KEY "$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 fi
 
-# your copy of the A Drive settings (kept out of git, so updates never overwrite it)
-if [ ! -f config/drive/config.yaml ]; then
-  cp config/drive/config.example.yaml config/drive/config.yaml
-fi
-
-if grep -q 'CHANGE_THIS_PASSWORD' config/drive/config.yaml; then
-  echo
-  read -r -s -p "Choose the A Drive admin password (5+ characters): " drive_pass
-  echo
-  if [ "${#drive_pass}" -lt 5 ]; then
-    red "Too short."
-    exit 1
-  fi
-  escaped=$(printf '%s' "$drive_pass" | sed -e 's/[\/&#]/\\&/g' -e 's/"/\\"/g')
-  sed -i "s#CHANGE_THIS_PASSWORD#${escaped}#" config/drive/config.yaml
-fi
-
-mkdir -p data/dashboard data/drive
+prepare_folders
 
 blue "Downloading and starting the apps (the first time takes a few minutes)…"
 docker compose pull
@@ -126,5 +121,6 @@ docker compose up -d
 echo
 green "EARTHROPY is running!"
 echo "  Open:   http://$(server_ip):${port}"
-echo "  A Drive login: user admin + the password you chose"
+echo "  Sign in on the dashboard: A Drive and System use the same login"
+echo "  Whatch (Jellyfin): http://$(server_ip):${port}/whatch/ — the first visit asks you to set it up"
 echo "  System page:   http://$(server_ip):${port}/system/"

@@ -20,6 +20,7 @@ services:
     depends_on:
       - dashboard
       - drive
+      - whatch
 
   # Dashboard (EARTHROPY build of Homarr)
   dashboard:
@@ -43,12 +44,27 @@ services:
     user: "0:0"
     environment:
       TZ: ${TZ:-America/Sao_Paulo}
-      FILEBROWSER_CONFIG: /home/filebrowser/config/config.yaml
+      FILEBROWSER_CONFIG: /home/filebrowser/config/settings.yaml
       FILEBROWSER_DATABASE_PATH: /home/filebrowser/data/database.sqlite
     volumes:
       - ./config/drive:/home/filebrowser/config
       - ./data/drive:/home/filebrowser/data
       - ${EARTHROPY_FILES:-/DATA}:/srv
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Whatch (Jellyfin, official image for now — the EARTHROPY look comes later)
+  whatch:
+    image: jellyfin/jellyfin:latest
+    container_name: earthropy-whatch
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - ./data/whatch/config:/config
+      - ./data/whatch/cache:/cache
+      # your files, read-only: Jellyfin can play them but never changes them
+      - ${EARTHROPY_FILES:-/DATA}:/media:ro
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
